@@ -1,0 +1,202 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/AutomationRules/44a8a63d-1bb0-4b14-beee-cecf9b1184cb')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/44a8a63d-1bb0-4b14-beee-cecf9b1184cb')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/AutomationRules",
+            "apiVersion": "2024-04-01-preview",
+            "properties": {
+                "displayName": "respond to BITS job",
+                "order": 11,
+                "triggeringLogic": {
+                    "isEnabled": true,
+                    "triggersOn": "Incidents",
+                    "triggersWhen": "Created",
+                    "conditions": [
+                        {
+                            "conditionType": "Property",
+                            "conditionProperties": {
+                                "propertyName": "IncidentRelatedAnalyticRuleIds",
+                                "operator": "Contains",
+                                "propertyValues": [
+                                    "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/', '84e486e8-e406-417f-bdcf-c29cf733fab2')]"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "actions": [
+                    {
+                        "order": 1,
+                        "actionType": "ModifyProperties",
+                        "actionConfiguration": {
+                            "severity": null,
+                            "status": "Active",
+                            "classification": null,
+                            "classificationReason": null,
+                            "classificationComment": null,
+                            "owner": null,
+                            "labels": null
+                        }
+                    },
+                    {
+                        "order": 2,
+                        "actionType": "RunPlaybook",
+                        "actionConfiguration": {
+                            "logicAppResourceId": "/subscriptions/e4c18f04-ee94-44fa-986e-e45be35cb293/resourceGroups/data_traiage/providers/Microsoft.Logic/workflows/Isolate-MDEMachine-incidentTrigger",
+                            "tenantId": "bc4187eb-89e8-4d80-8d2b-31eb3a2b25f9"
+                        }
+                    },
+                    {
+                        "order": 3,
+                        "actionType": "ModifyProperties",
+                        "actionConfiguration": {
+                            "severity": null,
+                            "status": null,
+                            "classification": null,
+                            "classificationReason": null,
+                            "classificationComment": null,
+                            "owner": {
+                                "objectId": "6eb1f70a-4549-4a6d-b4f4-98902f41c91b",
+                                "email": "jayinternalthreat@studmemt.onmicrosoft.com",
+                                "assignedTo": "internal threat",
+                                "userPrincipalName": "jayinternalthreat@studmemt.onmicrosoft.com"
+                            },
+                            "labels": null
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/AutomationRules/6157aba7-91ef-4856-a708-d9954ef5d152')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/6157aba7-91ef-4856-a708-d9954ef5d152')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/AutomationRules",
+            "apiVersion": "2024-04-01-preview",
+            "properties": {
+                "displayName": "Respond to credential dumping",
+                "order": 12,
+                "triggeringLogic": {
+                    "isEnabled": true,
+                    "triggersOn": "Incidents",
+                    "triggersWhen": "Created",
+                    "conditions": [
+                        {
+                            "conditionType": "Property",
+                            "conditionProperties": {
+                                "propertyName": "IncidentRelatedAnalyticRuleIds",
+                                "operator": "Contains",
+                                "propertyValues": [
+                                    "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/', '132ce189-ba9a-4201-8531-6c0df9b34479')]"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "actions": [
+                    {
+                        "order": 1,
+                        "actionType": "ModifyProperties",
+                        "actionConfiguration": {
+                            "severity": null,
+                            "status": "Active",
+                            "classification": null,
+                            "classificationReason": null,
+                            "classificationComment": null,
+                            "owner": null,
+                            "labels": null
+                        }
+                    },
+                    {
+                        "order": 2,
+                        "actionType": "RunPlaybook",
+                        "actionConfiguration": {
+                            "logicAppResourceId": "/subscriptions/e4c18f04-ee94-44fa-986e-e45be35cb293/resourceGroups/data_traiage/providers/Microsoft.Logic/workflows/Isolate-MDEMachine-incidentTrigger",
+                            "tenantId": "bc4187eb-89e8-4d80-8d2b-31eb3a2b25f9"
+                        }
+                    },
+                    {
+                        "order": 3,
+                        "actionType": "ModifyProperties",
+                        "actionConfiguration": {
+                            "severity": null,
+                            "status": null,
+                            "classification": null,
+                            "classificationReason": null,
+                            "classificationComment": null,
+                            "owner": {
+                                "objectId": "5305342a-7957-4421-a2af-2aa2ba10bced",
+                                "email": "jaychampaneri@studmemt.onmicrosoft.com",
+                                "assignedTo": "jay champaneri",
+                                "userPrincipalName": "jaychampaneri@studmemt.onmicrosoft.com"
+                            },
+                            "labels": null
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/AutomationRules/3717423f-b0d2-47c4-8b44-e9055932153c')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/3717423f-b0d2-47c4-8b44-e9055932153c')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/AutomationRules",
+            "apiVersion": "2024-04-01-preview",
+            "properties": {
+                "displayName": "respond to data theft",
+                "order": 14,
+                "triggeringLogic": {
+                    "isEnabled": true,
+                    "triggersOn": "Incidents",
+                    "triggersWhen": "Created",
+                    "conditions": [
+                        {
+                            "conditionType": "Property",
+                            "conditionProperties": {
+                                "propertyName": "IncidentRelatedAnalyticRuleIds",
+                                "operator": "Contains",
+                                "propertyValues": [
+                                    "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/', '4bd1f025-1803-42ce-a25a-a0e9af396ec1')]"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "actions": [
+                    {
+                        "order": 1,
+                        "actionType": "ModifyProperties",
+                        "actionConfiguration": {
+                            "severity": null,
+                            "status": null,
+                            "classification": null,
+                            "classificationReason": null,
+                            "classificationComment": null,
+                            "owner": {
+                                "objectId": "6eb1f70a-4549-4a6d-b4f4-98902f41c91b",
+                                "email": "jayinternalthreat@studmemt.onmicrosoft.com",
+                                "assignedTo": "internal threat",
+                                "userPrincipalName": "jayinternalthreat@studmemt.onmicrosoft.com"
+                            },
+                            "labels": null
+                        }
+                    },
+                    {
+                        "order": 2,
+                        "actionType": "RunPlaybook",
+                        "actionConfiguration": {
+                            "logicAppResourceId": "/subscriptions/e4c18f04-ee94-44fa-986e-e45be35cb293/resourceGroups/data_traiage/providers/Microsoft.Logic/workflows/Isolate-MDEMachine-incidentTrigger",
+                            "tenantId": "bc4187eb-89e8-4d80-8d2b-31eb3a2b25f9"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
