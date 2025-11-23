@@ -4,11 +4,19 @@
 
 This project demonstrates a comprehensive approach to detection engineering using the Atomic Red Team framework. The lab focuses on identifying detection gaps, developing custom KQL-based analytics rules, and implementing automated incident response workflows in Microsoft Sentinel and Defender for Endpoint.
 
+--> Block VM access
+
 ![Block VM access](lab/block_access.png)
+
+--> Incidents
 
 ![incidents](lab/incident.png)
 
+--> Detection Query
+
 ![analytic query for t1005](lab/detect_data_from_local_system.png)
+
+--> Atomic red team
 
 ![registry modification](lab/registry.png)
 
