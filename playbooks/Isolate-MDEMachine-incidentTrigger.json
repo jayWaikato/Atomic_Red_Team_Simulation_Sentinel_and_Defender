@@ -1,0 +1,222 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "contentVersion": "1.0.0.0",
+        "triggers": {
+            "Microsoft_Sentinel_incident": {
+                "type": "ApiConnectionWebhook",
+                "inputs": {
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                        }
+                    },
+                    "body": {
+                        "callback_url": "@listCallbackUrl()"
+                    },
+                    "path": "/incident-creation"
+                }
+            }
+        },
+        "actions": {
+            "Initialize_variables": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "MDEDeviceId",
+                            "type": "string"
+                        }
+                    ]
+                }
+            },
+            "Machines_-_Get_list_of_machines": {
+                "runAfter": {
+                    "Initialize_variables": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ApiConnection",
+                "inputs": {
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['wdatp']['connectionId']"
+                        }
+                    },
+                    "method": "get",
+                    "path": "/api/machines"
+                }
+            },
+            "Entities_-_Get_Hosts": {
+                "runAfter": {
+                    "Machines_-_Get_list_of_machines": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ApiConnection",
+                "inputs": {
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                        }
+                    },
+                    "method": "post",
+                    "body": "@triggerBody()?['object']?['properties']?['relatedEntities']",
+                    "path": "/entities/host"
+                }
+            },
+            "For_each": {
+                "foreach": "@body('Entities_-_Get_Hosts')?['Hosts']",
+                "actions": {
+                    "Compose_sentinel_hostname": {
+                        "type": "Compose",
+                        "inputs": "@item()?['HostName']"
+                    },
+                    "For_each_mde_host": {
+                        "foreach": "@body('Machines_-_Get_list_of_machines')?['value']",
+                        "actions": {
+                            "Compose_MDE_host": {
+                                "type": "Compose",
+                                "inputs": "@item()?['computerDnsName']"
+                            },
+                            "Condition": {
+                                "actions": {
+                                    "Set_variable": {
+                                        "type": "SetVariable",
+                                        "inputs": {
+                                            "name": "MDEDeviceId",
+                                            "value": "@item()?['id']"
+                                        }
+                                    },
+                                    "Actions_-_Isolate_machine": {
+                                        "runAfter": {
+                                            "Set_variable": [
+                                                "Succeeded"
+                                            ]
+                                        },
+                                        "type": "ApiConnection",
+                                        "inputs": {
+                                            "host": {
+                                                "connection": {
+                                                    "name": "@parameters('$connections')['wdatp']['connectionId']"
+                                                }
+                                            },
+                                            "method": "post",
+                                            "body": {
+                                                "Comment": "Host is isolated by Microsoft Sentinel using playbook Isolate-MDE-machine-incidentTrigger",
+                                                "IsolationType": "Full"
+                                            },
+                                            "path": "/api/machines/@{encodeURIComponent(variables('MDEDeviceId'))}/isolate"
+                                        }
+                                    },
+                                    "Add_comment_to_incident_(V3)": {
+                                        "runAfter": {
+                                            "Actions_-_Isolate_machine": [
+                                                "Succeeded"
+                                            ]
+                                        },
+                                        "type": "ApiConnection",
+                                        "inputs": {
+                                            "host": {
+                                                "connection": {
+                                                    "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                                                }
+                                            },
+                                            "method": "post",
+                                            "body": {
+                                                "incidentArmId": "@triggerBody()?['object']?['id']",
+                                                "message": "<p class=\"editor-paragraph\">Host- @{outputs('Compose_sentinel_hostname')}- is successfully isolated!</p>"
+                                            },
+                                            "path": "/Incidents/Comment"
+                                        }
+                                    }
+                                },
+                                "runAfter": {
+                                    "Compose_MDE_host": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "else": {
+                                    "actions": {
+                                        "Add_comment_to_incident_(V3)1": {
+                                            "type": "ApiConnection",
+                                            "inputs": {
+                                                "host": {
+                                                    "connection": {
+                                                        "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                                                    }
+                                                },
+                                                "method": "post",
+                                                "body": {
+                                                    "incidentArmId": "@triggerBody()?['object']?['id']",
+                                                    "message": "<p class=\"editor-paragraph\">Host- @{outputs('Compose_sentinel_hostname')}- is not isolated!</p><p class=\"editor-paragraph\">Reason : It is not present in Defender for endpoint</p>"
+                                                },
+                                                "path": "/Incidents/Comment"
+                                            }
+                                        }
+                                    }
+                                },
+                                "expression": {
+                                    "and": [
+                                        {
+                                            "contains": [
+                                                "@outputs('Compose_MDE_host')",
+                                                "@outputs('Compose_sentinel_hostname')"
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "type": "If"
+                            }
+                        },
+                        "runAfter": {
+                            "Compose_sentinel_hostname": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Foreach"
+                    }
+                },
+                "runAfter": {
+                    "Entities_-_Get_Hosts": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Foreach"
+            }
+        },
+        "parameters": {
+            "$connections": {
+                "type": "Object",
+                "defaultValue": {}
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "type": "Object",
+            "value": {
+                "azuresentinel": {
+                    "id": "/subscriptions/e4c18f04-ee94-44fa-986e-e45be35cb293/providers/Microsoft.Web/locations/eastus/managedApis/Azuresentinel",
+                    "connectionId": "/subscriptions/e4c18f04-ee94-44fa-986e-e45be35cb293/resourceGroups/data_traiage/providers/Microsoft.Web/connections/MicrosoftSentinel-Isolate-MDEMachine-incidentTrigger",
+                    "connectionName": "MicrosoftSentinel-Isolate-MDEMachine-incidentTrigger",
+                    "connectionProperties": {
+                        "authentication": {
+                            "type": "ManagedServiceIdentity"
+                        }
+                    }
+                },
+                "wdatp": {
+                    "id": "/subscriptions/e4c18f04-ee94-44fa-986e-e45be35cb293/providers/Microsoft.Web/locations/eastus/managedApis/Wdatp",
+                    "connectionId": "/subscriptions/e4c18f04-ee94-44fa-986e-e45be35cb293/resourceGroups/data_traiage/providers/Microsoft.Web/connections/Wdatp-Isolate-MDEMachine-incidentTrigger",
+                    "connectionName": "Wdatp-Isolate-MDEMachine-incidentTrigger",
+                    "connectionProperties": {
+                        "authentication": {
+                            "type": "ManagedServiceIdentity"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
